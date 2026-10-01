@@ -1,8 +1,6 @@
 // Modified by Mats Cedergren, 2026: Homebridge v2 fork (homebridge-glue-lock-v2).
-import {
-  Service, PlatformAccessory, CharacteristicValue,
-  CharacteristicSetCallback, CharacteristicGetCallback,
-} from 'homebridge';
+// Uses onGet/onSet handlers instead of the removed callback API.
+import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 import { GlueHomePlatformPlugin } from './platform';
 import { GlueApi } from './api/client';
 import {
@@ -54,102 +52,101 @@ export class GlueLockAccessory {
       || this.accessory.addService(this.platform.Service.LockMechanism);
 
     this.lockMechanism.getCharacteristic(this.platform.Characteristic.LockCurrentState)
-      .on('get', this.getLockCurrentState.bind(this));
+      .onGet(this.getLockCurrentState.bind(this));
 
     this.lockMechanism.getCharacteristic(this.platform.Characteristic.LockTargetState)
-      .on('get', this.getLockTargetState.bind(this))
-      .on('set', this.setLockTargetState.bind(this));
+      .onGet(this.getLockTargetState.bind(this))
+      .onSet(this.setLockTargetState.bind(this));
 
     this.batteryService = this.accessory.getService(this.platform.Service.Battery)
       || this.accessory.addService(this.platform.Service.Battery);
     this.batteryService
       .getCharacteristic(this.platform.Characteristic.BatteryLevel)
-      .on('get', this.getBatteryLevel.bind(this));
+      .onGet(this.getBatteryLevel.bind(this));
 
     this.batteryService
       .getCharacteristic(this.platform.Characteristic.StatusLowBattery)
-      .on('get', this.getBatteryStatus.bind(this));
+      .onGet(this.getBatteryStatus.bind(this));
 
     this.batteryService.getCharacteristic(this.platform.Characteristic.ChargingState)
-      .on('get', this.getBatteryChargingState.bind(this));
+      .onGet(this.getBatteryChargingState.bind(this));
 
     this.scheduleRefreshLockData();
   }
 
-  getLockCurrentState(callback: CharacteristicGetCallback) {
+  async getLockCurrentState(): Promise<CharacteristicValue> {
     const currentLockState = this.computeLockCurrentState();
     this.platform.log.debug(`getLockCurrentState for lock ${this.lock.description} with value ${currentLockState}`);
 
-    callback(null, currentLockState);
+    return currentLockState;
   }
 
-  getLockTargetState(callback: CharacteristicGetCallback) {
+  async getLockTargetState(): Promise<CharacteristicValue> {
     const currentLockState = this.computeLockCurrentState();
     this.platform.log.debug(`getLockTargetState for lock ${this.lock.description} with value ${currentLockState}`);
 
-    callback(null, currentLockState);
+    return currentLockState;
   }
 
-  setLockTargetState(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    this.platform.log.debug(`setLockTargetState setLockTargetState to ${value} for lock ${this.lock.description}`);
+  async setLockTargetState(value: CharacteristicValue): Promise<void> {
+    this.platform.log.debug(`setLockTargetState to ${value} for lock ${this.lock.description}`);
     const targetValue = value as number;
     const remoteOperationType = this.lockTargetStateMapper[targetValue];
-    
+
     if (this.isBusy) {
       this.platform.log.info(`Lock ${this.lock.description} is currently busy. Please retry in a few seconds.`);
-      callback(null);
       return;
     }
 
-    if (this.lock.connectionStatus === LockConnecitionStatus.Connected) {
-      this.glueClient
-        .createLockOperation(this.lock.id, { type: remoteOperationType })
-        .then(createdOperation => {
-          this.platform.log.debug(`operation for lock ${this.lock.description}`, createdOperation);
-          this.isBusy = true;
-  
-          return (createdOperation.isFinished())
-            ? createdOperation
-            : retry<LockOperation>({
-              times: 20,
-              interval: 1000,
-              task: () => this.checkRemoteOperationStatus(createdOperation.id),
-            });
-        })
-        .then(operation => {
-          this.platform.log.info('Operation finished', operation);
-          if (operation.status !== LockOperationStatus.Completed) {
-            throw new Error(`Remote operation ${operation.status}.`);
-          }
-          callback(null);
-        })
-        .catch(err => {
-          this.platform.log.error(err);
-          callback(err);
-        })
-        .finally(() => {
-          this.isBusy = false;
-          this.refreshLockData();
+    if (this.lock.connectionStatus !== LockConnecitionStatus.Connected) {
+      this.platform.log.error(`Lock ${this.lock.description} is not connected.`);
+      throw this.communicationFailure();
+    }
+
+    try {
+      const createdOperation = await this.glueClient.createLockOperation(this.lock.id, { type: remoteOperationType });
+      this.platform.log.debug(`operation for lock ${this.lock.description}`, createdOperation);
+      this.isBusy = true;
+
+      const operation = createdOperation.isFinished()
+        ? createdOperation
+        : await retry<LockOperation>({
+          times: 20,
+          interval: 1000,
+          task: () => this.checkRemoteOperationStatus(createdOperation.id),
         });
-    } else {
-      callback(new Error(`Lock ${this.lock.description} is not connected.`));
+
+      this.platform.log.info('Operation finished', operation);
+      if (operation.status !== LockOperationStatus.Completed) {
+        throw new Error(`Remote operation ${operation.status}.`);
+      }
+    } catch (err) {
+      this.platform.log.error(`${remoteOperationType} failed for lock ${this.lock.description}:`, err);
+      throw this.communicationFailure();
+    } finally {
+      this.isBusy = false;
+      this.refreshLockData();
     }
   }
 
-  getBatteryLevel(callback: CharacteristicGetCallback) {
+  async getBatteryLevel(): Promise<CharacteristicValue> {
     this.platform.log.debug(`getBatteryLevel for lock ${this.lock.description} with value ${this.lock.batteryStatus}.`);
-    callback(null, this.lock.batteryStatus);
+    return this.lock.batteryStatus;
   }
 
-  getBatteryStatus(callback: CharacteristicGetCallback) {
+  async getBatteryStatus(): Promise<CharacteristicValue> {
     const status = this.computeLockBatteryStatus();
     this.platform.log.debug(`getBatteryStatus for lock ${this.lock.description} with value ${status}.`);
-    callback(null, status);
+    return status;
   }
 
-  getBatteryChargingState(callback: CharacteristicGetCallback) {
+  async getBatteryChargingState(): Promise<CharacteristicValue> {
     this.platform.log.debug(`getBatteryChargingState for lock ${this.lock.description}`);
-    callback(null, this.platform.Characteristic.ChargingState.NOT_CHARGEABLE);
+    return this.platform.Characteristic.ChargingState.NOT_CHARGEABLE;
+  }
+
+  private communicationFailure() {
+    return new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
   }
 
   private async checkRemoteOperationStatus(opId: string): Promise<LockOperation> {
@@ -196,6 +193,9 @@ export class GlueLockAccessory {
         this.batteryService.updateCharacteristic(this.platform.Characteristic.BatteryLevel, this.lock.batteryStatus);
         this.batteryService.updateCharacteristic(this.platform.Characteristic.StatusLowBattery, this.computeLockBatteryStatus());
         this.lockMechanism.updateCharacteristic(this.platform.Characteristic.LockCurrentState, this.computeLockCurrentState());
+      })
+      .catch(err => {
+        this.platform.log.warn(`Could not refresh lock ${this.lock.description}:`, err instanceof Error ? err.message : err);
       });
   }
 }

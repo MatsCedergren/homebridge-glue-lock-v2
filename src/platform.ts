@@ -1,4 +1,5 @@
 // Modified by Mats Cedergren, 2026: Homebridge v2 fork (homebridge-glue-lock-v2).
+// Generates accessory UUIDs with hap.uuid and removes legacy cached accessories.
 import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { GlueLockAccessory } from './lock';
@@ -52,34 +53,56 @@ export class GlueHomePlatformPlugin implements DynamicPlatformPlugin {
     if (this.apiClient === undefined) {
       return;
     }
-    this.apiClient.getLocks()
+    const apiClient = this.apiClient;
+    apiClient.getLocks()
       .then(locks => {
+        const activeUUIDs = new Set<string>();
+
         for (const lock of locks) {
-          const existingAccessory = this.accessories.find(accessory => accessory.UUID === lock.id);
+          const uuid = this.api.hap.uuid.generate(lock.id);
+          activeUUIDs.add(uuid);
+
+          // Versions before 0.3.0 used the raw lock id as UUID. Remove such accessories so they are not duplicated.
+          const legacyAccessory = this.accessories.find(accessory => accessory.UUID === lock.id && lock.id !== uuid);
+          if (legacyAccessory) {
+            this.log.info('Removing legacy accessory from cache:', legacyAccessory.displayName);
+            this.removeCachedAccessory(legacyAccessory);
+          }
+
+          const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
 
           if (existingAccessory) {
-            if (lock) {
-              this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
+            this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
 
-              new GlueLockAccessory(this, existingAccessory, this.apiClient as GlueApi, lock);
+            new GlueLockAccessory(this, existingAccessory, apiClient, lock);
 
-              this.api.updatePlatformAccessories([existingAccessory]);
-            } else if (!lock) {
-              this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [existingAccessory]);
-              this.log.info('Removing existing accessory from cache:', existingAccessory.displayName);
-            }
+            this.api.updatePlatformAccessories([existingAccessory]);
           } else {
-            this.log.info('Adding new accessory:', lock.serialNumber);
+            this.log.info('Adding new accessory:', lock.description);
 
-            const accessory = new this.api.platformAccessory(lock.description, lock.id);
+            const accessory = new this.api.platformAccessory(lock.description, uuid);
 
-            new GlueLockAccessory(this, accessory, this.apiClient as GlueApi, lock);
+            new GlueLockAccessory(this, accessory, apiClient, lock);
 
             this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+            this.accessories.push(accessory);
+          }
+        }
+
+        // Remove cached accessories for locks that no longer exist in the Glue account.
+        for (const accessory of [...this.accessories]) {
+          if (!activeUUIDs.has(accessory.UUID)) {
+            this.log.info('Removing accessory that is no longer in the Glue account:', accessory.displayName);
+            this.removeCachedAccessory(accessory);
           }
         }
       }).catch(error => {
-        this.log.error(error);
+        this.log.error('Could not discover locks:', error instanceof Error ? error.message : error);
       });
+  }
+
+  private removeCachedAccessory(accessory: PlatformAccessory) {
+    this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+    this.accessories.splice(this.accessories.indexOf(accessory), 1);
   }
 }
