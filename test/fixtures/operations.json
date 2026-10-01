@@ -1,0 +1,14 @@
+{
+  "_comment": "Observed in Phase 0 on 2026-10-01. Ids are fake. POST returns HTTP 201 with status pending.",
+  "unlockCompleted": [
+    { "id": "op-unlock-0001", "status": "pending" },
+    { "id": "op-unlock-0001", "status": "pending" },
+    { "id": "op-unlock-0001", "status": "completed" }
+  ],
+  "lockFailed": [
+    { "id": "op-lock-0001", "status": "pending" },
+    { "id": "op-lock-0001", "status": "pending" },
+    { "id": "op-lock-0001", "status": "pending" },
+    { "id": "op-lock-0001", "status": "failed" }
+  ]
+}

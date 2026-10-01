@@ -1,3 +1,4 @@
+// Modified by Mats Cedergren, 2026: Homebridge v2 fork (homebridge-glue-lock-v2).
 import { platform, release } from 'os';
 
 /**
@@ -5,7 +6,7 @@ import { platform, release } from 'os';
  */
 export const PLATFORM_NAME = 'GlueHomebridge';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 export const VERSION = require('../package.json').version;
 
 export const OS_VERSION = `${platform()} ${release()}`;
@@ -13,4 +14,4 @@ export const OS_VERSION = `${platform()} ${release()}`;
 /**
  * This must match the name of your plugin as defined the package.json
  */
-export const PLUGIN_NAME = '@gluehome/homebridge-gluehome';
+export const PLUGIN_NAME = 'homebridge-glue-lock-v2';

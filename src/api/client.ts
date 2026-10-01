@@ -1,31 +1,32 @@
-import axios, { AxiosError, AxiosInstance } from 'axios';
+// Modified by Mats Cedergren, 2026: replaced axios with the built-in fetch API.
 import { Lock, LockOperation, CreateLockOperation } from './';
 import { PLATFORM_NAME, VERSION, OS_VERSION } from '../settings';
 
 const API_URL = 'https://user-api.gluehome.com';
 const USER_AGENT = `${PLATFORM_NAME}/${VERSION} (${OS_VERSION})`;
+const REQUEST_TIMEOUT_MS = 60000;
 
 export async function issueApiKey(username: string, password: string): Promise<string> {
-  try {
-    const response = await axios.post(`${API_URL}/v1/api-keys`, {
+  const response = await fetch(`${API_URL}/v1/api-keys`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'User-Agent': USER_AGENT,
+      'Authorization': `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`,
+    },
+    body: JSON.stringify({
       name: 'homebridge',
       scopes: ['locks.write', 'locks.read', 'events.read'],
-    },
-    { 
-      headers: {
-        'Contenty-Type': 'application/json',
-        'User-Agent': USER_AGENT,
-      },
-      auth: {
-        username: username,
-        password: password,
-      },
-    });
+    }),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  });
 
-    return response.data.apiKey;
-  } catch(err) {
-    throw Error(err);
+  if (!response.ok) {
+    throw new Error(await describeError(response));
   }
+
+  const data = await response.json() as { apiKey: string };
+  return data.apiKey;
 }
 
 export interface ApiError {
@@ -34,60 +35,66 @@ export interface ApiError {
     correlationId: string;
 }
 
+async function describeError(response: Response): Promise<string> {
+  if (response.status === 401) {
+    return 'Wrong authentication data provided. Please check the plugin configuration.';
+  }
+
+  try {
+    const { title, code, correlationId, detail } = await response.json() as ApiError & { title: string };
+    return `${title} (code: ${code} correlationId: ${correlationId} details: ${detail})`;
+  } catch {
+    return `HTTP ${response.status} ${response.statusText}`;
+  }
+}
+
 export class GlueApi {
-    private readonly apiKey: string;
-    private httpClient: AxiosInstance;
+  private readonly apiKey: string;
 
-    constructor(apiKey: string) {
-      this.apiKey = apiKey;
+  constructor(apiKey: string) {
+    this.apiKey = apiKey;
+  }
 
-      this.httpClient = axios.create({
-        baseURL: API_URL,
-        timeout: 60000,
-      });
+  public getLocks(): Promise<Lock[]> {
+    return this.request<Lock[]>('GET', '/v1/locks')
+      .then(data => data?.map(Lock.fromJson) ?? []);
+  }
 
-      this.httpClient.interceptors.request.use(config => {
-        config.headers.authorization = `Api-Key ${apiKey}`;
-        config.headers['User-Agent'] = USER_AGENT;
-        return config;
-      }, (error: AxiosError) => {
-        return Promise.reject(error.toJSON());
-      });
+  public getLock(id: string): Promise<Lock> {
+    return this.request<Lock>('GET', `/v1/locks/${id}`)
+      .then(Lock.fromJson);
+  }
 
-      this.httpClient.interceptors.response.use(
-        res => res,
-        err => {
-          if (err.response === undefined) {
-            return Promise.reject(err);
-          }
-          if (err.response.status === 401) {
-            return Promise.reject('Wrong authentication data provided. Please check the plugin configuration.');
-          }
+  public getLockOperation(id: string, operationId: string): Promise<LockOperation> {
+    return this.request<LockOperation>('GET', `/v1/locks/${id}/operations/${operationId}`)
+      .then(LockOperation.fromJson);
+  }
 
-          const {title, code, correlationId, detail} = err.response.data;
-          const msg = `${title} (code: ${code} correlationId: ${correlationId} details: ${detail})`;
-          return Promise.reject(msg);
-        },
-      );
+  public createLockOperation(id: string, operation: CreateLockOperation): Promise<LockOperation> {
+    return this.request<LockOperation>('POST', `/v1/locks/${id}/operations`, operation)
+      .then(LockOperation.fromJson);
+  }
+
+  private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
+    const headers: Record<string, string> = {
+      'Authorization': `Api-Key ${this.apiKey}`,
+      'User-Agent': USER_AGENT,
+    };
+    if (body !== undefined) {
+      headers['Content-Type'] = 'application/json';
     }
 
-    public getLocks(): Promise<Lock[]> {
-      return this.httpClient.get<Lock[]>('/v1/locks')
-        .then(res => res.data?.map(Lock.fromJson) ?? []);
+    const response = await fetch(`${API_URL}${path}`, {
+      method,
+      headers,
+      body: body === undefined ? undefined : JSON.stringify(body),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+
+    if (!response.ok) {
+      throw new Error(await describeError(response));
     }
 
-    public getLock(id: string): Promise<Lock> {
-      return this.httpClient.get<Lock>(`/v1/locks/${id}`)
-        .then(res => Lock.fromJson(res.data));
-    }
-
-    public getLockOperation(id: string, operationId: string): Promise<LockOperation> {
-      return this.httpClient.get<LockOperation>(`/v1/locks/${id}/operations/${operationId}`)
-        .then(res => LockOperation.fromJson(res.data));
-    }
-
-    public createLockOperation(id: string, operation: CreateLockOperation): Promise<LockOperation> {
-      return this.httpClient.post<LockOperation>(`/v1/locks/${id}/operations`, operation)
-        .then(res => LockOperation.fromJson(res.data));
-    }
+    return await response.json() as T;
+  }
 }

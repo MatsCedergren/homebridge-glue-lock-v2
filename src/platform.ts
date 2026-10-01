@@ -1,3 +1,4 @@
+// Modified by Mats Cedergren, 2026: Homebridge v2 fork (homebridge-glue-lock-v2).
 import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { GlueLockAccessory } from './lock';

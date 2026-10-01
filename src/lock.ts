@@ -1,3 +1,4 @@
+// Modified by Mats Cedergren, 2026: Homebridge v2 fork (homebridge-glue-lock-v2).
 import {
   Service, PlatformAccessory, CharacteristicValue,
   CharacteristicSetCallback, CharacteristicGetCallback,
@@ -59,8 +60,8 @@ export class GlueLockAccessory {
       .on('get', this.getLockTargetState.bind(this))
       .on('set', this.setLockTargetState.bind(this));
 
-    this.batteryService = this.accessory.getService(this.platform.Service.BatteryService)
-      || this.accessory.addService(this.platform.Service.BatteryService);
+    this.batteryService = this.accessory.getService(this.platform.Service.Battery)
+      || this.accessory.addService(this.platform.Service.Battery);
     this.batteryService
       .getCharacteristic(this.platform.Characteristic.BatteryLevel)
       .on('get', this.getBatteryLevel.bind(this));
