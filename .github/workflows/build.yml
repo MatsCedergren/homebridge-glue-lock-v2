@@ -1,4 +1,4 @@
-name: Build and Lint
+name: Lint, Build and Test
 
 on: [push, pull_request]
 
@@ -29,7 +29,13 @@ jobs:
       - name: Lint the project
         run: npm run lint
 
+      - name: Type-check source and tests
+        run: npm run typecheck
+
       - name: Build the project
         run: npm run build
         env:
           CI: true
+
+      - name: Run tests
+        run: npm test

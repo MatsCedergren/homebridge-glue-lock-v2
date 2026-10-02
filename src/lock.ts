@@ -215,8 +215,14 @@ export class GlueLockAccessory {
       return;
     }
     this.pollTimer = setTimeout(async () => {
-      const ok = await this.refreshLockData();
-      this.schedulePoll(ok ? this.pollIntervalMs : pollDelayMs(this.pollIntervalMs, this.consecutivePollFailures));
+      let ok = false;
+      try {
+        ok = await this.refreshLockData();
+      } catch (err) {
+        // Never let an unexpected error stop the poll loop or the child bridge.
+        this.platform.log.error(`${this.name}: unexpected error during refresh: ${errorMessage(err)}`);
+      }
+      this.schedulePoll(ok ? this.pollIntervalMs : pollDelayMs(this.pollIntervalMs, Math.max(1, this.consecutivePollFailures)));
     }, delayMs);
   }
 
@@ -246,6 +252,9 @@ export class GlueLockAccessory {
   }
 
   private applyLock(updatedLock: Lock) {
+    if (!updatedLock?.lastLockEvent && !updatedLock?.connectionStatus) {
+      throw new Error('Glue API returned an empty lock.');
+    }
     const previous = this.lock;
     this.lock = updatedLock;
 
