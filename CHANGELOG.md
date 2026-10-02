@@ -3,6 +3,15 @@
 All notable changes to `homebridge-glue-lock-v2` are listed here.
 This package is an unofficial fork of [`@gluehome/homebridge-gluehome`](https://github.com/GlueHome/homebridge-plugin) 0.2.0.
 
+## 1.0.1 - 2026-10-02
+
+### Changed
+
+- The GitHub repository is renamed to [`MatsCedergren/homebridge-glue-lock-v2`](https://github.com/MatsCedergren/homebridge-glue-lock-v2). The package links point to the new name.
+- First version published from GitHub Actions with npm trusted publishing and provenance.
+
+No code changes.
+
 ## 1.0.0 - 2026-10-02
 
 First release of the fork.
