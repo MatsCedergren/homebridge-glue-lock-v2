@@ -1,7 +1,7 @@
 {
   "displayName": "Glue Lock (Homebridge v2)",
   "name": "homebridge-glue-lock-v2",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Unofficial Homebridge plugin for Glue smart locks (fork of the GlueHome plugin). Supports Homebridge 1.8+ and 2.x.",
   "author": {
     "name": "Mats Cedergren"
@@ -12,10 +12,10 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MatsCedergren/homebridge-plugin.git"
+    "url": "git+https://github.com/MatsCedergren/homebridge-glue-lock-v2.git"
   },
   "bugs": {
-    "url": "https://github.com/MatsCedergren/homebridge-plugin/issues"
+    "url": "https://github.com/MatsCedergren/homebridge-glue-lock-v2/issues"
   },
   "engines": {
     "node": "^22 || ^24",
@@ -59,7 +59,7 @@
     "typescript-eslint": "^8.71.0",
     "vitest": "^5.0.3"
   },
-  "homepage": "https://github.com/MatsCedergren/homebridge-plugin#readme",
+  "homepage": "https://github.com/MatsCedergren/homebridge-glue-lock-v2#readme",
   "publishConfig": {
     "access": "public"
   }
