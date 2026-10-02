@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { GlueApi, issueApiKey } from '../src/api/client';
+import { GlueApi } from '../src/api/client';
 import { Lock, LockOperationType } from '../src/api';
 import locks from './fixtures/locks.json';
 
@@ -103,27 +103,5 @@ describe('GlueApi', () => {
     fetchMock.mockRejectedValueOnce(new TypeError('fetch failed'));
 
     await expect(new GlueApi('test-key').getLocks()).rejects.toThrow('fetch failed');
-  });
-});
-
-describe('issueApiKey', () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  it('uses Basic auth and the correct Content-Type header', async () => {
-    const fetchMock = vi.fn<typeof fetch>().mockResolvedValueOnce(jsonResponse({ apiKey: 'new-key' }, 201));
-    vi.stubGlobal('fetch', fetchMock);
-
-    const key = await issueApiKey('user', 'pass');
-
-    expect(key).toBe('new-key');
-    const [url, init] = fetchMock.mock.calls[0];
-    const headers = init!.headers as Record<string, string>;
-    expect(String(url)).toBe(`${API_URL}/v1/api-keys`);
-    expect(headers['Content-Type']).toBe('application/json');
-    expect(headers['Contenty-Type']).toBeUndefined();
-    expect(headers['Authorization']).toBe(`Basic ${Buffer.from('user:pass').toString('base64')}`);
-    expect(JSON.parse(String(init!.body)).scopes).toEqual(['locks.write', 'locks.read', 'events.read']);
   });
 });

@@ -1,19 +1,18 @@
 // Modified by Mats Cedergren, 2026: Homebridge v2 fork (homebridge-glue-lock-v2).
 // Generates accessory UUIDs with hap.uuid, removes legacy cached accessories,
 // reads poll and battery options and retries discovery with backoff.
+// Never creates API keys: the key must be in the config.
 import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { GlueLockAccessory, GlueLockOptions } from './lock';
 import { GlueApi } from './api';
-import { issueApiKey } from './api/client';
+import { readApiKey } from './config';
 import { normalizeLowBatteryThreshold, normalizePollInterval, pollDelayMs } from './lockState';
 
 const DISCOVERY_RETRY_BASE_MS = 30 * 1000;
 
 interface GlueHomePlatformConfig extends PlatformConfig {
-  apiKey: string;
-  username: string;
-  password: string;
+  apiKey?: string;
   pollInterval?: number;
   lowBatteryThreshold?: number;
 }
@@ -51,20 +50,16 @@ export class GlueHomePlatformPlugin implements DynamicPlatformPlugin {
     this.api.on('didFinishLaunching', () => {
       log.debug('Executed didFinishLaunching callback');
 
-      this.getApiKey(config as GlueHomePlatformConfig)
-        .then(key => {
-          this.apiClient = new GlueApi(key);
-          this.discoverDevices();
-        }).catch(err => {
-          log.error('Error authenticating:', err instanceof Error ? err.message : err);
-        });
-    });
-  }
+      const { apiKey, errors, warnings } = readApiKey(config);
+      warnings.forEach(warning => log.warn(warning));
+      errors.forEach(error => log.error(error));
+      if (!apiKey) {
+        return;
+      }
 
-  getApiKey(glueConfig: GlueHomePlatformConfig): Promise<string> {
-    return (glueConfig.apiKey)
-      ? Promise.resolve(glueConfig.apiKey)
-      : issueApiKey(glueConfig.username, glueConfig.password);
+      this.apiClient = new GlueApi(apiKey);
+      this.discoverDevices();
+    });
   }
 
   configureAccessory(accessory: PlatformAccessory) {
