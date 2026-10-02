@@ -1,38 +1,44 @@
 ---
 name: Support Request
-about: Need help?
+about: Help with installation or configuration of the plugin
 title: ''
 labels: question
 assignees: ''
 
 ---
 
-<!-- You must use the issue template below when submitting a support request -->
+<!--
+WARNING: Never post your Glue API key ("apiKey"). It can unlock your door.
+Replace it with *** in the config and in the logs before you submit.
+-->
 
 **Describe Your Problem:**
-<!-- A clear and concise description of what problem you are trying to solve. -->
+<!-- What are you trying to do, and what happens? -->
 
 **Logs:**
+<!-- Lines from the Homebridge log that start with [Glue]. Replace any apiKey with ***. -->
 
 ```
-Show the Homebridge logs here, remove any sensitive information.
+Paste the [Glue] log lines here.
 ```
 
 **Plugin Config:**
+<!-- Only the "GlueHomebridge" block. Replace the apiKey with ***. -->
 
 ```json
-Show your Homebridge config.json here, remove any sensitive information.
+{
+    "platform": "GlueHomebridge",
+    "name": "Glue",
+    "apiKey": "***"
+}
 ```
-
-**Screenshots:**
-<!-- If applicable, add screenshots to help explain your problem. -->
 
 **Environment:**
 
-* **Plugin Version**:
+* **Plugin Version**: <!-- Homebridge UI → Plugins, or the log line "plugin vX.Y.Z" -->
 * **Homebridge Version**: <!-- homebridge -V -->
 * **Node.js Version**: <!-- node -v -->
-* **NPM Version**: <!-- npm -v -->
 * **Operating System**: <!-- Raspbian / Ubuntu / Debian / Windows / macOS / Docker / hb-service -->
+* **Moving from @gluehome/homebridge-gluehome**: <!-- yes / no -->
 
 <!-- Click the "Preview" tab before you submit to ensure the formatting is correct. -->

@@ -1,44 +1,54 @@
 ---
 name: Bug Report
-about: Create a report to help us improve
+about: Something in the plugin does not work as described in the README
 title: ''
 labels: bug
 assignees: ''
 
 ---
 
-<!-- You must use the issue template below when submitting a bug -->
+<!--
+WARNING: Never post your Glue API key ("apiKey"). It can unlock your door.
+Replace it with *** in the config and in the logs before you submit.
+-->
 
 **Describe The Bug:**
-<!-- A clear and concise description of what the bug is. -->
+<!-- What happened? -->
 
 **To Reproduce:**
-<!-- Steps to reproduce the behavior. -->
+<!-- The steps that cause the problem. -->
 
 **Expected behavior:**
-<!-- A clear and concise description of what you expected to happen. -->
+<!-- What should happen? -->
+
+**Lock state:**
+<!-- What did the Home app show, and what was the real state of the door? -->
 
 **Logs:**
+<!-- Lines from the Homebridge log that start with [Glue] (or the name of your platform). Replace any apiKey with ***. -->
 
 ```
-Show the Homebridge logs here, remove any sensitive information.
+Paste the [Glue] log lines here.
 ```
 
 **Plugin Config:**
+<!-- Only the "GlueHomebridge" block. Replace the apiKey with ***. -->
 
 ```json
-Show your Homebridge config.json here, remove any sensitive information.
+{
+    "platform": "GlueHomebridge",
+    "name": "Glue",
+    "apiKey": "***"
+}
 ```
-
-**Screenshots:**
-<!-- If applicable, add screenshots to help explain your problem. -->
 
 **Environment:**
 
-* **Plugin Version**:
+* **Plugin Version**: <!-- Homebridge UI → Plugins, or the log line "plugin vX.Y.Z" -->
 * **Homebridge Version**: <!-- homebridge -V -->
 * **Node.js Version**: <!-- node -v -->
-* **NPM Version**: <!-- npm -v -->
 * **Operating System**: <!-- Raspbian / Ubuntu / Debian / Windows / macOS / Docker / hb-service -->
+* **Child bridge**: <!-- yes / no -->
+* **Glue Hub connection**: <!-- connected / offline / not known -->
 
 <!-- Click the "Preview" tab before you submit to ensure the formatting is correct. -->
