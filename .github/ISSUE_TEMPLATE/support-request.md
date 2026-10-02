@@ -9,27 +9,29 @@ assignees: ''
 
 <!--
 WARNING: Never post your Glue API key ("apiKey"). It can unlock your door.
-Replace it with *** in the config and in the logs before you submit.
+Delete the "apiKey" line from the config before you paste it.
 -->
 
 **Describe Your Problem:**
 <!-- What are you trying to do, and what happens? -->
 
 **Logs:**
-<!-- Lines from the Homebridge log that start with [Glue]. Replace any apiKey with ***. -->
+
+> ⚠️ Paste only lines that start with `[Glue]`. Check that they contain no API key.
 
 ```
 Paste the [Glue] log lines here.
 ```
 
 **Plugin Config:**
-<!-- Only the "GlueHomebridge" block. Replace the apiKey with ***. -->
+
+> ⚠️ **Never post your Glue API key.** It can unlock your door.
+> Paste only the "GlueHomebridge" block, and delete the `"apiKey"` line first.
 
 ```json
 {
     "platform": "GlueHomebridge",
-    "name": "Glue",
-    "apiKey": "***"
+    "name": "Glue"
 }
 ```
 
