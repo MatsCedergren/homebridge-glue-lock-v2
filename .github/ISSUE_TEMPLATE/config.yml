@@ -1,5 +1,8 @@
-# blank_issues_enabled: false
-# contact_links:
-#   - name: Homebridge Discord Community
-#     url: https://discord.gg/kqNCe2D
-#     about: Ask your questions in the #YOUR_CHANNEL_HERE channel
+blank_issues_enabled: false
+contact_links:
+  - name: Security problem
+    url: https://github.com/MatsCedergren/homebridge-glue-lock-v2/security/advisories/new
+    about: Report a security problem privately. Do not open a public issue.
+  - name: Problem with the Glue lock, hub or app
+    url: https://www.gluehome.com/support/home
+    about: This plugin is not made by GlueHome. For the lock, the Glue Hub or the Glue app, contact GlueHome support.
