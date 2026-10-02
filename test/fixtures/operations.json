@@ -1,0 +1,53 @@
+{
+  "_comment": "unlockCompleted and lockFailed were observed in Phase 0 on 2026-10-01. lockTimeout is synthetic (not observed). Ids are fake. POST returns HTTP 201 with status pending.",
+  "unlockCompleted": [
+    {
+      "id": "op-unlock-0001",
+      "status": "pending"
+    },
+    {
+      "id": "op-unlock-0001",
+      "status": "pending"
+    },
+    {
+      "id": "op-unlock-0001",
+      "status": "completed"
+    }
+  ],
+  "lockFailed": [
+    {
+      "id": "op-lock-0001",
+      "status": "pending"
+    },
+    {
+      "id": "op-lock-0001",
+      "status": "pending"
+    },
+    {
+      "id": "op-lock-0001",
+      "status": "pending"
+    },
+    {
+      "id": "op-lock-0001",
+      "status": "failed"
+    }
+  ],
+  "lockTimeout": [
+    {
+      "id": "op-lock-0002",
+      "status": "pending"
+    },
+    {
+      "id": "op-lock-0002",
+      "status": "pending"
+    },
+    {
+      "id": "op-lock-0002",
+      "status": "timeout"
+    }
+  ],
+  "createdCompleted": {
+    "id": "op-lock-0003",
+    "status": "completed"
+  }
+}

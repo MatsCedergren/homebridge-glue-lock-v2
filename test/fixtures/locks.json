@@ -1,0 +1,14 @@
+[
+  {
+    "id": "00000000-0000-4000-8000-000000000001",
+    "serialNumber": "GLUE-TEST-0001",
+    "description": "Ytterdörren",
+    "firmwareVersion": "2.5",
+    "batteryStatus": 100,
+    "lastLockEvent": {
+      "eventType": "pressAndGo",
+      "eventTime": "2026-10-01T16:24:55Z"
+    },
+    "connectionStatus": "connected"
+  }
+]

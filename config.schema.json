@@ -2,46 +2,36 @@
   "pluginAlias": "GlueHomebridge",
   "pluginType": "platform",
   "singular": true,
+  "headerDisplay": "Unofficial plugin for Glue smart locks. Create an API key with your Glue account and enter it below.",
   "schema": {
     "type": "object",
     "properties": {
-      "auth": {
-        "title": "Authentication Mode",
+      "name": {
+        "title": "Name",
         "type": "string",
-        "default": "api-key",
-        "oneOf": [
-          { "title": "API-Key", "enum": ["api-key"] },
-          { "title": "Basic Auth", "enum": ["basic"] }  
-        ],
-        "description": "The authentication method GlueHome plugin will use to access your Glue profile and Glue devices. API-Key auth is recommended.",
+        "default": "Glue",
         "required": true
       },
       "apiKey": {
-        "title": "apiKey",
+        "title": "API key",
         "type": "string",
-        "required": false,
-        "description": "The API-KEY issued using your Glue account.",
-        "condition": {
-          "functionBody": "return model.auth === 'api-key';"
-        }
+        "required": true,
+        "description": "The API key issued for your Glue account. It needs the scopes locks.read, locks.write and events.read."
       },
-      "username": {
-        "title": "username",
-        "type": "string",
-        "required": false,
-        "description": "You Glue account phone number in international format (e.g. +46734567890)",
-        "condition": {
-          "functionBody": "return model.auth === 'basic';"
-        }
+      "pollInterval": {
+        "title": "Poll interval (seconds)",
+        "type": "integer",
+        "default": 30,
+        "minimum": 15,
+        "description": "How often the plugin reads the lock status from Glue. Minimum 15 seconds."
       },
-      "password": {
-        "title": "password",
-        "type": "string",
-        "required": false,
-        "description": "Your Glue account password",
-        "condition": {
-          "functionBody": "return model.auth === 'basic';"
-        }
+      "lowBatteryThreshold": {
+        "title": "Low battery threshold (%)",
+        "type": "integer",
+        "default": 20,
+        "minimum": 1,
+        "maximum": 100,
+        "description": "HomeKit shows a low battery warning when the battery level is below this value."
       }
     }
   }

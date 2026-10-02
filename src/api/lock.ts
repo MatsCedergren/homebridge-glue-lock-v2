@@ -1,3 +1,4 @@
+// Modified by Mats Cedergren, 2026: battery threshold moved to lockState.ts; LockEvent matches the API (eventTime).
 export class Lock {
   constructor(
         public id: string,
@@ -11,10 +12,6 @@ export class Lock {
 
   public getLockModel(): string {
     return this.serialNumber.substring(0, 4);
-  }
-
-  public isBatteryLow(): boolean {
-    return this.batteryStatus < 50;
   }
 
   public static fromJson(json): Lock {
@@ -83,7 +80,7 @@ export type EventType =
     'manualUnlock' |
     'manualLock';
 
-interface LockEvent {
+export interface LockEvent {
     eventType: EventType;
-    lastLockEventDate: Date;
+    eventTime: string;
 }
