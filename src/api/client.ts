@@ -1,33 +1,10 @@
-// Modified by Mats Cedergren, 2026: replaced axios with the built-in fetch API.
+// Modified by Mats Cedergren, 2026: replaced axios with the built-in fetch API; removed API key creation.
 import { Lock, LockOperation, CreateLockOperation } from './';
 import { PLATFORM_NAME, VERSION, OS_VERSION } from '../settings';
 
 const API_URL = 'https://user-api.gluehome.com';
 const USER_AGENT = `${PLATFORM_NAME}/${VERSION} (${OS_VERSION})`;
 const REQUEST_TIMEOUT_MS = 60000;
-
-export async function issueApiKey(username: string, password: string): Promise<string> {
-  const response = await fetch(`${API_URL}/v1/api-keys`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'User-Agent': USER_AGENT,
-      'Authorization': `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`,
-    },
-    body: JSON.stringify({
-      name: 'homebridge',
-      scopes: ['locks.write', 'locks.read', 'events.read'],
-    }),
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-  });
-
-  if (!response.ok) {
-    throw new Error(await describeError(response));
-  }
-
-  const data = await response.json() as { apiKey: string };
-  return data.apiKey;
-}
 
 export interface ApiError {
     code: number;

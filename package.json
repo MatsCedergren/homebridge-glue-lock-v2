@@ -1,8 +1,8 @@
 {
   "displayName": "Glue Lock (Homebridge v2)",
   "name": "homebridge-glue-lock-v2",
-  "version": "0.3.0",
-  "description": "Unofficial fork of the GlueHome Homebridge plugin. Supports Homebridge 1.8+ and 2.x.",
+  "version": "1.0.0",
+  "description": "Unofficial Homebridge plugin for Glue smart locks (fork of the GlueHome plugin). Supports Homebridge 1.8+ and 2.x.",
   "author": {
     "name": "Mats Cedergren"
   },
@@ -26,21 +26,26 @@
     "dist",
     "config.schema.json",
     "LICENSE",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "lint": "eslint src test --max-warnings=0",
-    "watch": "npm run build && npm link && nodemon",
+    "typecheck": "tsc -p tsconfig.test.json",
     "build": "rimraf ./dist && tsc",
-    "prepublishOnly": "npm run lint && npm run typecheck && npm run build && npm test",
     "test": "vitest run",
-    "typecheck": "tsc -p tsconfig.test.json"
+    "watch": "npm run build && npm link && nodemon",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run lint && npm run typecheck && npm run build && npm test"
   },
   "keywords": [
     "homebridge-plugin",
+    "homebridge",
     "glue",
-    "iot",
-    "smartlock"
+    "glue-lock",
+    "smartlock",
+    "lock",
+    "homekit"
   ],
   "devDependencies": {
     "@eslint/js": "^9.39.5",
@@ -53,5 +58,9 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.71.0",
     "vitest": "^5.0.3"
+  },
+  "homepage": "https://github.com/MatsCedergren/homebridge-plugin#readme",
+  "publishConfig": {
+    "access": "public"
   }
 }
