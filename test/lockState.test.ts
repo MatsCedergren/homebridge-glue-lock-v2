@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   LockCurrentState, LockTargetState, currentStateFromEvent, targetStateFromCurrent, isBatteryLow,
-  normalizeLowBatteryThreshold, normalizePollInterval, pollDelayMs, isReachable, MAX_POLL_BACKOFF_MS,
+  normalizeLowBatteryThreshold, normalizePollInterval, normalizeFastPollAfterOperation, pollDelayMs, isReachable, MAX_POLL_BACKOFF_MS,
 } from '../src/lockState';
 import { EventType, LockConnecitionStatus } from '../src/api';
 
@@ -78,6 +78,13 @@ describe('poll interval', () => {
 
   it('never gives a delay shorter than the base interval', () => {
     expect(pollDelayMs(10 * 60 * 1000, 3)).toBe(10 * 60 * 1000);
+  });
+
+  it('fast polling after an operation is on unless the config sets it to false', () => {
+    expect(normalizeFastPollAfterOperation(undefined)).toBe(true);
+    expect(normalizeFastPollAfterOperation(true)).toBe(true);
+    expect(normalizeFastPollAfterOperation(false)).toBe(false);
+    expect(normalizeFastPollAfterOperation('false')).toBe(false);
   });
 });
 

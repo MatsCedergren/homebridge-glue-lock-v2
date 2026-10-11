@@ -9,12 +9,13 @@ import {
 } from './api';
 import {
   LockTargetState, currentStateFromEvent, targetStateFromCurrent, isBatteryLow, isReachable,
-  pollDelayMs, describeCurrentState,
+  pollDelayMs, describeCurrentState, FAST_POLL_INTERVAL_MS, FAST_POLL_WINDOW_MS,
 } from './lockState';
 
 export interface GlueLockOptions {
   pollIntervalSeconds: number;
   lowBatteryThreshold: number;
+  fastPollAfterOperation: boolean;
 }
 
 // Glue reports a final status for an operation after about 5-10 seconds.
@@ -32,6 +33,7 @@ export class GlueLockAccessory {
   private lastEventKey: string;
   private consecutivePollFailures = 0;
   private pollTimer?: NodeJS.Timeout;
+  private fastPollUntil = 0;
   private stopped = false;
 
   constructor(
@@ -193,6 +195,7 @@ export class GlueLockAccessory {
     } finally {
       this.operationInFlight = false;
       await this.refreshLockData();
+      this.startFastPolling();
     }
   }
 
@@ -210,9 +213,29 @@ export class GlueLockAccessory {
     return `${lock.lastLockEvent?.eventType}@${lock.lastLockEvent?.eventTime}`;
   }
 
+  /** Glue can report the new lock event some seconds after the operation. Read the lock more often for a short time. */
+  private startFastPolling() {
+    if (!this.options.fastPollAfterOperation) {
+      return;
+    }
+    this.fastPollUntil = Date.now() + FAST_POLL_WINDOW_MS;
+    this.schedulePoll(FAST_POLL_INTERVAL_MS);
+  }
+
+  private nextPollDelayMs(ok: boolean) {
+    if (!ok) {
+      return pollDelayMs(this.pollIntervalMs, Math.max(1, this.consecutivePollFailures));
+    }
+    return Date.now() < this.fastPollUntil ? FAST_POLL_INTERVAL_MS : this.pollIntervalMs;
+  }
+
   private schedulePoll(delayMs: number) {
     if (this.stopped) {
       return;
+    }
+    // Only one poll timer at a time.
+    if (this.pollTimer) {
+      clearTimeout(this.pollTimer);
     }
     this.pollTimer = setTimeout(async () => {
       let ok = false;
@@ -222,7 +245,7 @@ export class GlueLockAccessory {
         // Never let an unexpected error stop the poll loop or the child bridge.
         this.platform.log.error(`${this.name}: unexpected error during refresh: ${errorMessage(err)}`);
       }
-      this.schedulePoll(ok ? this.pollIntervalMs : pollDelayMs(this.pollIntervalMs, Math.max(1, this.consecutivePollFailures)));
+      this.schedulePoll(this.nextPollDelayMs(ok));
     }, delayMs);
   }
 

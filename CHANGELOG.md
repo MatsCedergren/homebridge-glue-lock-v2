@@ -5,6 +5,10 @@ This package is an unofficial fork of [`@gluehome/homebridge-gluehome`](https://
 
 ## Unreleased
 
+### Added
+
+- After a lock or unlock from HomeKit, the plugin reads the lock status every 5 seconds for 60 seconds. HomeKit shows the result faster. Set `fastPollAfterOperation` to `false` to turn this off.
+
 ### Changed
 
 - The package homepage is now https://homebridge.cedergren.info/glue-lock/.
