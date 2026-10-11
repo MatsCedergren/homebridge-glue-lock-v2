@@ -9,6 +9,8 @@ import type { PlatformAccessory } from 'homebridge';
 import locks from './fixtures/locks.json';
 
 const POLL_MS = 30_000;
+const FAST_POLL_MS = 5_000;
+const FAST_POLL_WINDOW_MS = 60_000;
 const SECURED = Characteristic.LockCurrentState.SECURED;
 const UNSECURED = Characteristic.LockCurrentState.UNSECURED;
 const UNKNOWN = Characteristic.LockCurrentState.UNKNOWN;
@@ -67,10 +69,10 @@ describe('GlueLockAccessory', () => {
   let accessory: ReturnType<typeof makeAccessory>;
   let handler: GlueLockAccessory | undefined;
 
-  function create(lock: Lock, lowBatteryThreshold = 20) {
+  function create(lock: Lock, lowBatteryThreshold = 20, fastPollAfterOperation = true) {
     handler = new GlueLockAccessory(
       platform, accessory as unknown as PlatformAccessory, client as unknown as GlueApi, lock,
-      { pollIntervalSeconds: POLL_MS / 1000, lowBatteryThreshold },
+      { pollIntervalSeconds: POLL_MS / 1000, lowBatteryThreshold, fastPollAfterOperation },
     );
     return handler;
   }
@@ -361,6 +363,65 @@ describe('GlueLockAccessory', () => {
       await vi.advanceTimersByTimeAsync(2 * POLL_MS);
       expect(client.getLock).toHaveBeenCalledTimes(2);
       expect(await lockAccessory.getLockCurrentState()).toBe(SECURED);
+    });
+
+    it('polls every 5 s for 60 s after an operation, then at the normal interval', async () => {
+      const lockAccessory = create(makeLock());
+      client.createLockOperation.mockResolvedValueOnce(LockOperation.fromJson({ id: 'op-1', status: 'completed' }));
+      client.getLock.mockResolvedValue(makeLock());
+
+      await lockAccessory.setLockTargetState(Characteristic.LockTargetState.UNSECURED);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(client.getLock).toHaveBeenCalledTimes(1);
+
+      await vi.advanceTimersByTimeAsync(FAST_POLL_WINDOW_MS);
+      expect(client.getLock).toHaveBeenCalledTimes(1 + FAST_POLL_WINDOW_MS / FAST_POLL_MS);
+
+      await vi.advanceTimersByTimeAsync(POLL_MS - 1);
+      expect(client.getLock).toHaveBeenCalledTimes(1 + FAST_POLL_WINDOW_MS / FAST_POLL_MS);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(client.getLock).toHaveBeenCalledTimes(2 + FAST_POLL_WINDOW_MS / FAST_POLL_MS);
+      expect(client.createLockOperation).toHaveBeenCalledOnce();
+    });
+
+    it('does not poll faster after an operation when fastPollAfterOperation is false', async () => {
+      const lockAccessory = create(makeLock(), 20, false);
+      client.createLockOperation.mockResolvedValueOnce(LockOperation.fromJson({ id: 'op-1', status: 'completed' }));
+      client.getLock.mockResolvedValue(makeLock());
+
+      await lockAccessory.setLockTargetState(Characteristic.LockTargetState.UNSECURED);
+      await vi.advanceTimersByTimeAsync(POLL_MS - 1);
+
+      expect(client.getLock).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not poll faster after a failed request', async () => {
+      const lockAccessory = create(makeLock());
+      client.createLockOperation.mockRejectedValueOnce(new Error('fetch failed'));
+      client.getLock.mockResolvedValue(makeLock());
+
+      await expectCommunicationFailure(lockAccessory.setLockTargetState(Characteristic.LockTargetState.UNSECURED));
+      await vi.advanceTimersByTimeAsync(POLL_MS - 1);
+
+      expect(client.getLock).not.toHaveBeenCalled();
+    });
+
+    it('uses the normal backoff when a fast poll fails', async () => {
+      const lockAccessory = create(makeLock());
+      client.createLockOperation.mockResolvedValueOnce(LockOperation.fromJson({ id: 'op-1', status: 'completed' }));
+      client.getLock
+        .mockResolvedValueOnce(makeLock())
+        .mockRejectedValueOnce(new Error('fetch failed'))
+        .mockResolvedValue(makeLock());
+
+      await lockAccessory.setLockTargetState(Characteristic.LockTargetState.UNSECURED);
+      await vi.advanceTimersByTimeAsync(FAST_POLL_MS);
+      expect(client.getLock).toHaveBeenCalledTimes(2);
+
+      await vi.advanceTimersByTimeAsync(2 * POLL_MS - 1);
+      expect(client.getLock).toHaveBeenCalledTimes(2);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(client.getLock).toHaveBeenCalledTimes(3);
     });
 
     it('stops polling after stop()', async () => {

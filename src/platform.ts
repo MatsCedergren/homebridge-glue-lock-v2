@@ -7,7 +7,7 @@ import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { GlueLockAccessory, GlueLockOptions } from './lock';
 import { GlueApi } from './api';
 import { readApiKey } from './config';
-import { normalizeLowBatteryThreshold, normalizePollInterval, pollDelayMs } from './lockState';
+import { normalizeFastPollAfterOperation, normalizeLowBatteryThreshold, normalizePollInterval, pollDelayMs } from './lockState';
 
 const DISCOVERY_RETRY_BASE_MS = 30 * 1000;
 
@@ -15,6 +15,7 @@ interface GlueHomePlatformConfig extends PlatformConfig {
   apiKey?: string;
   pollInterval?: number;
   lowBatteryThreshold?: number;
+  fastPollAfterOperation?: boolean;
 }
 
 export class GlueHomePlatformPlugin implements DynamicPlatformPlugin {
@@ -37,8 +38,10 @@ export class GlueHomePlatformPlugin implements DynamicPlatformPlugin {
     this.lockOptions = {
       pollIntervalSeconds: normalizePollInterval(glueConfig.pollInterval),
       lowBatteryThreshold: normalizeLowBatteryThreshold(glueConfig.lowBatteryThreshold),
+      fastPollAfterOperation: normalizeFastPollAfterOperation(glueConfig.fastPollAfterOperation),
     };
-    log.debug(`Poll interval ${this.lockOptions.pollIntervalSeconds} s, low battery below ${this.lockOptions.lowBatteryThreshold}%.`);
+    log.debug(`Poll interval ${this.lockOptions.pollIntervalSeconds} s, low battery below ${this.lockOptions.lowBatteryThreshold}%, `
+      + `fast poll after operation ${this.lockOptions.fastPollAfterOperation ? 'on' : 'off'}.`);
 
     this.api.on('shutdown', () => {
       if (this.discoveryTimer) {

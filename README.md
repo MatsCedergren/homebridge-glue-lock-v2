@@ -71,7 +71,8 @@ Use the plugin settings in the Homebridge UI, or edit `config.json`:
         "name": "Glue",
         "apiKey": "<your api key>",
         "pollInterval": 30,
-        "lowBatteryThreshold": 20
+        "lowBatteryThreshold": 20,
+        "fastPollAfterOperation": true
     }
 ]
 ```
@@ -83,6 +84,7 @@ Use the plugin settings in the Homebridge UI, or edit `config.json`:
 | `name` | no | `Glue` | Name of the platform in the log. |
 | `pollInterval` | no | `30` | Seconds between status reads from Glue. Minimum `15`. After a failed read, the delay doubles, up to 5 minutes. |
 | `lowBatteryThreshold` | no | `20` | HomeKit shows a low-battery warning when the battery level is below this value (%). |
+| `fastPollAfterOperation` | no | `true` | After a lock or unlock from HomeKit, read the status every 5 seconds for 60 seconds. Set to `false` to use only `pollInterval`. |
 
 ## Move from `@gluehome/homebridge-gluehome`
 
@@ -104,6 +106,7 @@ If the old lock was on a child bridge and the Home app does not let you add the 
 
 - The lock state comes from the last lock event that Glue reports, for example `remoteLock` or `manualUnlock`.
 - HomeKit is updated after each status read, so a change can take up to `pollInterval` seconds to appear.
+- After a lock or unlock from HomeKit, the plugin reads the status every 5 seconds for 60 seconds. This makes HomeKit show the result faster. Set `fastPollAfterOperation` to `false` to turn this off.
 - If Glue does not report an operation, for example a manual operation that the Glue Hub did not register, HomeKit shows the old state until Glue reports a new event.
 - After a failed or timed-out operation, HomeKit shows "Locking…" or "Unlocking…" until Glue reports a new lock event. The plugin does not send the operation again. Check the door.
 

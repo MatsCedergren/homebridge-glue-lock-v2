@@ -9,6 +9,8 @@ export const DEFAULT_POLL_INTERVAL_SECONDS = 30;
 export const MIN_POLL_INTERVAL_SECONDS = 15;
 export const MAX_POLL_BACKOFF_MS = 5 * 60 * 1000;
 export const DEFAULT_LOW_BATTERY_THRESHOLD = 20;
+export const FAST_POLL_INTERVAL_MS = 5 * 1000;
+export const FAST_POLL_WINDOW_MS = 60 * 1000;
 
 const CURRENT_STATE_BY_EVENT: Record<EventType, number> = {
   'unknown': LockCurrentState.UNKNOWN,
@@ -55,6 +57,11 @@ export function normalizePollInterval(value?: unknown): number {
     return DEFAULT_POLL_INTERVAL_SECONDS;
   }
   return Math.max(MIN_POLL_INTERVAL_SECONDS, Math.round(seconds));
+}
+
+/** Fast polling after an operation is on by default. Only false turns it off. */
+export function normalizeFastPollAfterOperation(value?: unknown): boolean {
+  return value !== false && value !== 'false';
 }
 
 /** Poll delay after a number of consecutive failures: doubles each time, up to MAX_POLL_BACKOFF_MS. */

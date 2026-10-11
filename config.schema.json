@@ -32,6 +32,12 @@
         "minimum": 1,
         "maximum": 100,
         "description": "HomeKit shows a low battery warning when the battery level is below this value."
+      },
+      "fastPollAfterOperation": {
+        "title": "Poll faster after lock or unlock",
+        "type": "boolean",
+        "default": true,
+        "description": "After a lock or unlock from HomeKit, read the status every 5 seconds for 60 seconds. Turn off to use only the poll interval."
       }
     }
   }
