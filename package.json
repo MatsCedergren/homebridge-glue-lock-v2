@@ -59,7 +59,7 @@
     "typescript-eslint": "^8.71.0",
     "vitest": "^5.0.3"
   },
-  "homepage": "https://github.com/MatsCedergren/homebridge-glue-lock-v2#readme",
+  "homepage": "https://homebridge.cedergren.info/glue-lock/",
   "publishConfig": {
     "access": "public"
   }

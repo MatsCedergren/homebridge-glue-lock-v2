@@ -9,6 +9,8 @@
 
 Homebridge plugin for Glue smart locks. It uses the Glue cloud API through a Glue Hub.
 
+Homepage: https://homebridge.cedergren.info/glue-lock/
+
 > **Unofficial fork.** This project is a fork of [GlueHome/homebridge-plugin](https://github.com/GlueHome/homebridge-plugin).
 > It is not made, supported or endorsed by GlueHome. It is licensed under the Apache License 2.0, the same as the original.
 
