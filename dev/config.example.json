@@ -1,0 +1,19 @@
+{
+  "bridge": {
+    "name": "Homebridge Glue Test",
+    "username": "0E:47:4C:55:45:54",
+    "port": 51830,
+    "pin": "031-45-154"
+  },
+  "accessories": [],
+  "platforms": [
+    {
+      "platform": "GlueHomebridge",
+      "name": "Glue",
+      "apiKey": "<your api key>",
+      "pollInterval": 30,
+      "lowBatteryThreshold": 20,
+      "fastPollAfterOperation": true
+    }
+  ]
+}

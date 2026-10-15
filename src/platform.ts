@@ -7,6 +7,7 @@ import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { GlueLockAccessory, GlueLockOptions } from './lock';
 import { GlueApi } from './api';
 import { readApiKey } from './config';
+import { asSentence } from './utils';
 import { normalizeFastPollAfterOperation, normalizeLowBatteryThreshold, normalizePollInterval, pollDelayMs } from './lockState';
 
 const DISCOVERY_RETRY_BASE_MS = 30 * 1000;
@@ -123,7 +124,7 @@ export class GlueHomePlatformPlugin implements DynamicPlatformPlugin {
         // Cached accessories are kept. Try again later, with a longer delay after each failure.
         this.discoveryFailures++;
         const delayMs = pollDelayMs(DISCOVERY_RETRY_BASE_MS, this.discoveryFailures - 1);
-        this.log.error(`Could not discover locks: ${error instanceof Error ? error.message : error}. `
+        this.log.error(`Could not discover locks: ${asSentence(error instanceof Error ? error.message : String(error))} `
           + `Trying again in ${Math.round(delayMs / 1000)} s.`);
         this.discoveryTimer = setTimeout(() => this.discoverDevices(), delayMs);
       });
