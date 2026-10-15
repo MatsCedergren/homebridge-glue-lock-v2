@@ -133,6 +133,42 @@ npm test
 
 The tests never call the real Glue API. They use fixtures in `test/fixtures`.
 
+### Test with a local Homebridge
+
+You can run the plugin from this repository in a separate Homebridge on your computer. Your production Homebridge is not changed.
+
+1. Select the Node.js version from `.nvmrc`:
+
+   ```sh
+   nvm use
+   ```
+
+2. Make the storage directory and copy the example config:
+
+   ```sh
+   mkdir -p ~/.homebridge-glue-test
+   cp dev/config.example.json ~/.homebridge-glue-test/config.json
+   chmod 600 ~/.homebridge-glue-test/config.json
+   ```
+
+3. Replace `<your api key>` in `~/.homebridge-glue-test/config.json` with your Glue API key.
+
+4. Start Homebridge:
+
+   ```sh
+   npm run watch
+   ```
+
+5. In the Home app, add the bridge "Homebridge Glue Test" with the QR code in the log, or with the PIN `031-45-154`.
+
+When you change a file in `src`, the plugin is built again and Homebridge restarts. Stop Homebridge with Ctrl+C.
+
+- The test bridge uses its own name, MAC address and port (`51830`), so it does not conflict with your production bridge.
+- Homebridge loads only this plugin (`--strict-plugin-resolution`).
+- To use another storage directory, set `HOMEBRIDGE_TEST_STORAGE`.
+- The test bridge controls your real lock. A lock or unlock from the test bridge locks or unlocks the door.
+- The lock is shown twice in the Home app, one time for each bridge. Remove the test bridge from the Home app when you are done.
+
 ## License
 
 Apache License 2.0. See [LICENSE](LICENSE). The original plugin was made by GlueHome.
